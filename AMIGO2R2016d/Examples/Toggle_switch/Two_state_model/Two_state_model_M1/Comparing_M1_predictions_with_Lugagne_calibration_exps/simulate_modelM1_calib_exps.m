@@ -35,7 +35,7 @@ inputs.model.exe_type='standard';
      inputs.exps.n_obs{iexp}=2;                              % Number of observed quantities per experiment                         
      inputs.exps.obs_names{iexp}=char('LacI_star','TetR_star');       % name of observables
      inputs.exps.obs{iexp}=char('LacI=LacI_star','TetR=TetR_star'); 
-     inputs.exps.exp_y0{iexp}= log(y0_init_ss); % initialise_M1_Lugagne_experiments(EXP_data,iexp); %[0,0,0.304420014782823,0.932964573854386,450.362572537976,855.546160287592]; %get_initial_values();       % Initial conditions for each experiment       
+     inputs.exps.exp_y0{iexp}= log(y0_init_ss); % initialise_M1_Lugagne_exp_data(EXP_data,iexp); %[0,0,0.304420014782823,0.932964573854386,450.362572537976,855.546160287592]; %get_initial_values();       % Initial conditions for each experiment       
      inputs.exps.t_f{iexp}=EXP_data{1,iexp}.timeGFP(1,end)/60;                               % Experiments duration
      inputs.exps.n_s{iexp}=length(EXP_data{1,iexp}.timeGFP(1,:));                               % Number of sampling times
      inputs.exps.t_s{iexp}=EXP_data{1,iexp}.timeGFP(1,:)/60;                         % [] Sampling times, by default equidistant and in minutes
