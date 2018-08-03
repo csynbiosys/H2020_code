@@ -55,7 +55,7 @@ end
 
 cd C:\Users\vkothama\GoogleDrive\PostDoc\Edinburgh\Projects\H2020\ToggleSwitch\Tools\AMIGO2R2016d\Examples\Toggle_switch\LugagneModel\analysing_experimental_data
 
-save('Lugagne_exp_data_all_sets','EXP_data')
+save('LugagneData_init','EXP_data')
 
 
 end
