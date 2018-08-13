@@ -12,7 +12,7 @@ inputs.pathd.runident='run';                                                    
 % Load MODEL RELATED DATA
 %============================
 
-model=lugagne_toggle_switch_model_IEM();
+model=lugagne_toggle_switch_model_NIEM();
 
 %==================================
 % EXPERIMENTAL SCHEME RELATED DATA
@@ -31,7 +31,7 @@ inputs.model.exe_type='standard';
      inputs.exps.n_obs{iexp}=2;                              % Number of observed quantities per experiment
      inputs.exps.obs_names{iexp}=char('LacI','TetR');       % name of observables
      inputs.exps.obs{iexp}=char('LacI=LacI','TetR=TetR');
-     inputs.exps.exp_y0{iexp}=EXP_data{1,iexp}.init; %get_initial_values_m(EXP_data,iexp);%EXP_data{1,iexp}.init2;%[0,0,0.304420014782823,0.932964573854386,450.362572537976,855.546160287592]; %get_initial_values();       % Initial conditions for each experiment
+     inputs.exps.exp_y0{iexp}=gety0_NonIdenticalExchangeModel(EXP_data,iexp);%EXP_data{1,iexp}.init2;%[0,0,0.304420014782823,0.932964573854386,450.362572537976,855.546160287592]; %get_initial_values();       % Initial conditions for each experiment
      inputs.exps.t_f{iexp}=EXP_data{1,iexp}.timeGFP(1,end)/60;                               % Experiments duration
      inputs.exps.n_s{iexp}=length(EXP_data{1,iexp}.timeGFP(1,:));                               % Number of sampling times
      inputs.exps.t_s{iexp}=EXP_data{1,iexp}.timeGFP(1,:)/60;                         % [] Sampling times, by default equidistant and in minutes
@@ -75,5 +75,5 @@ inputs.plotd.ny_contour=100;                          % ADVISE: >50
 
 % Simulating the model with 5 experiments
 
-% AMIGO_Prep(inputs);
-% AMIGO_SModel(inputs);
+AMIGO_Prep(inputs);
+AMIGO_SModel(inputs);

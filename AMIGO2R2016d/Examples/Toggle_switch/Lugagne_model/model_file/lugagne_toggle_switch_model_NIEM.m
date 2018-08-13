@@ -1,4 +1,4 @@
-function [model] = lugagne_toggle_switch_model_NIEM_NIEM()
+function [model] = lugagne_toggle_switch_model_NIEM()
 
 % This is the script for the Non Identical Inducer Exchange Model discussed
 % in Lugagne's paper: https://www-nature-com.ezproxy.is.ed.ac.uk/articles/s41467-017-01498-0
