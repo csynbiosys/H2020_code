@@ -47,20 +47,19 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
 
     global_theta_guess = global_theta_guess';
     
-    %Compute the steady state considering the initial theta guess and 0 IPTG
-    y0 = PLac_Compute_SteadyState(global_theta_guess,0);
+    % Compute the steady state considering the initial theta guess, u_IPTG and
+    % u_aTc
+    % Based on SI, the initial conditions were 1mM u_IPTG and u_aTc = 0
+    y0 = ToggleSwitch_Compute_SteadyState(global_theta_guess,1,0);
     
-    % Randomized vector of experiments
+    % Index 
     exps_indexall = [22,3,10,19,17,15,4,14,6,8,21,20,13,24,7,11,16,23,2,18,1,12,5,9];
-    % Definition of the Training set 
-    exps_indexTraining = exps_indexall(1:16);
-    % Definition of test set 
-    exps_indexTest =  exps_indexall(17:end);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Run  PE on the training set
+% Run  PE on the experimental dataset
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Define the exps structure, containing the experimental data to fit
-    exps.n_exp = length(exps_indexTraining);
+    exps.n_exp = length(exps_indexExperiments);
     
     for iexp=1:length(exps_indexTraining)
         exp_indexData = exps_indexTraining(iexp);
