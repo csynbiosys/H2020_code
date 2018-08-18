@@ -1,8 +1,8 @@
 function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,global_theta_guess)
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% fit_to_ToggleSwitch - runs PE of the model structure proposed in \ref 7 of the paper to their experimental data.
-% The 24 experiments (12 dose-response curves starting either from steady-state in 0 or 1000 uM IPTG)
-%are randomised and split in training (16 experiments) and test (8
+% fit_to_ToggleSwitch - runs PE of the model structure we propose for the Toggle Switch to the experimental data published in Lugagne et al., 2017.
+% The 26 experiments are randomised and split in training (17 experiments)
+% and test (9
 % experiments) sets.
 % PE is run, starting from 100 initial guesses for the parameters, on the training set.
 % Each vector of estimates is used to compute the SSE over the test set. 
@@ -33,10 +33,10 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     short_name     = strcat('TSF');
  
     % Load experimental data. This data are derived, using the script
-    % Ref7_Data_StructureCreation.m, starting from data used in Ref7 of the
-    % paper. Please request permission to the authors of Ref7 to access the
-    % data.
-    load(' ');
+    % ExtractionAllExperimentalData/ExtractionStructure_AllData.m, starting from data used in the paper
+    % Lugagne et al. Please note that as of yet there are doubts about the
+    % data. 
+    load('AllDataLugagne.mat');
  
     % Read the model into the model variable
     ToggleSwitch_load_model; 
@@ -47,53 +47,50 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
 
     global_theta_guess = global_theta_guess';
     
-    % Compute the steady state considering the initial theta guess, u_IPTG and
-    % u_aTc
-    % Based on SI, the initial conditions were 1mM u_IPTG and u_aTc = 0
-    y0 = ToggleSwitch_Compute_SteadyState(global_theta_guess,1,0);
-    
-    % Index 
-    exps_indexall = [22,3,10,19,17,15,4,14,6,8,21,20,13,24,7,11,16,23,2,18,1,12,5,9];
+    % Randomized vector of experiments
+    exps_indexall = [22,6,3,16,11,7,17,14,8,5,21,25,26,19,15,1,23,2,4,18,24,13,9,20,10,12];
+    % Definition of the Training set 
+    exps_indexTraining = exps_indexall(1:17);
+    % Definition of test set 
+    exps_indexTest =  exps_indexall(18:end);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Run  PE on the experimental dataset
+% Run  PE on the training set
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Define the exps structure, containing the experimental data to fit
-    exps.n_exp = length(exps_indexExperiments);
+    exps.n_exp = length(exps_indexTraining);
     
     for iexp=1:length(exps_indexTraining)
         exp_indexData = exps_indexTraining(iexp);
         exps.exp_type{iexp} = 'fixed'; 
-        exps.n_obs{iexp} = 1; 
-        exps.obs_names{iexp} = char('Fluorescence');
-        exps.obs{iexp} = char('Fluorescence = Cit_AU');
-        exps.t_f{iexp} = Data.t_con{1,exp_indexData}(end); 
+        exps.n_obs{iexp} = 2; 
+        exps.obs_names{iexp} = char('RFP','GFP');
+        exps.obs{iexp} = char('RFP = L_AU','GFP = T_AU');
+        exps.t_f{iexp} = Data.t_con{1,exp_indexData}(:,end); 
         exps.n_s{iexp} = Data.n_samples{1,exp_indexData};
         exps.t_s{iexp} = Data.t_samples{1,exp_indexData}; 
-        exps.u_interp{iexp} = 'step';
+        exps.u_interp{iexp} = {'step','step'};
         exps.t_con{iexp} = Data.t_con{1,exp_indexData};
-        exps.n_steps{iexp} = length(exps.t_con{iexp})-1;
-
-        if exp_indexData<13
-           exps.u{iexp} =  [0 Data.input{1,exp_indexData}];
-
-        else
-           exps.u{iexp} = [1000 Data.input{1,exp_indexData}];
-        end
+        exps.n_steps{iexp} = ones(2,1).*(length(exps.t_con{iexp})-1);
 
         exps.data_type = 'real';
         exps.noise_type = 'homo';
         exps.exp_data{iexp} = Data.exp_data{1,exp_indexData};
         exps.error_data{iexp} = Data.standard_dev{1,exp_indexData};
+        % Compute the steady state considering the initial theta guess, u_IPTG and
+        % u_aTc
+        y0 = ToggleSwitch_Compute_SteadyState(global_theta_guess,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
         exps.exp_y0{iexp} = y0;
     end
 
     best_global_theta = global_theta_guess; 
-    param_including_vector = [true,true,false,true,true,true,true,true,true,false,true,true,true,true];
+    % g_m and g_p excluded from identification
+    param_including_vector = [true,false,true,true,true,true,true,true,false,true,true,true,true,true,true,true,true,true,true,true];
 
     % Compile the model
     clear inputs;
     inputs.model = model;
+    inputs.model.par = best_global_theta;
     inputs.exps  = exps;
 
     inputs.pathd.results_folder = results_folder;                        
@@ -128,10 +125,12 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     inputs.nlpsol.nlpsolver='eSS';
     inputs.nlpsol.eSS.maxeval = 200000;
     inputs.nlpsol.eSS.maxtime = 5000;
-    inputs.nlpsol.eSS.log_var = [1 2 3 4 5 6 7 8 9 10 11 12];
+    param_including_vector = [true,false,true,true,true,true,true,true,false,true,true,true,true,true,true,true,true,true,true,true];
+
+    inputs.nlpsol.eSS.log_var = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18];
     inputs.nlpsol.eSS.local.solver = 'lsqnonlin'; 
     inputs.nlpsol.eSS.local.finish = 'lsqnonlin'; 
-    inputs.rid.conf_ntrials=500;
+    %inputs.rid.conf_ntrials=500;
 
     pe_start = now;
     pe_inputs = inputs;
@@ -170,27 +169,25 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         
         exp_indexData = exps_indexTest(iexp);
         exps.exp_type{iexp} = 'fixed'; 
-        exps.n_obs{iexp} = 1; 
-        exps.obs_names{iexp} = char('Fluorescence');
-        exps.obs{iexp} = char('Fluorescence = Cit_AU');
-        y0_to_use = PLac_Compute_SteadyState(best_global_theta,0);   
-        exps.exp_y0{iexp}=y0_to_use;  
-        exps.t_f{iexp} = Data.t_con{1,exp_indexData}(end); 
+        exps.n_obs{iexp} = 2; 
+        exps.obs_names{iexp} = char('RFP','GFP');
+        exps.obs{iexp} = char('RFP = L_AU','GFP = T_AU');
+        exps.t_f{iexp} = Data.t_con{1,exp_indexData}(:,end); 
         exps.n_s{iexp} = Data.n_samples{1,exp_indexData};
         exps.t_s{iexp} = Data.t_samples{1,exp_indexData}; 
-        exps.u_interp{iexp} = 'step';
+        exps.u_interp{iexp} = {'step','step'};
         exps.t_con{iexp} = Data.t_con{1,exp_indexData};
-        exps.n_steps{iexp} = length(exps.t_con{iexp})-1;
+        exps.n_steps{iexp} = ones(2,1).*(length(exps.t_con{iexp})-1);
 
-        if exp_indexData<13
-           exps.u{iexp} =  [0 Data.input{1,exp_indexData}];
-
-        else
-           exps.u{iexp} = [1000 Data.input{1,exp_indexData}];
-        end
-        
+        exps.data_type = 'real';
+        exps.noise_type = 'homo';
         exps.exp_data{iexp} = Data.exp_data{1,exp_indexData};
         exps.error_data{iexp} = Data.standard_dev{1,exp_indexData};
+        % Compute the steady state considering the initial theta guess, u_IPTG and
+        % u_aTc
+        y0 = ToggleSwitch_Compute_SteadyState(best_global_theta,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
+        exps.exp_y0{iexp} = y0;
+
     end
    
     inputs.model = model;
