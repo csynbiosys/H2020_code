@@ -41,8 +41,8 @@ L_molec = kL_p/g_p*L_m_dummy;
 
 T_molec = kT_p/g_p*T_m_dummy; 
 
-%L_AU = sc_L_molec*L_molec;
-%T_AU = sc_T_molec*T_molec;
+L_AU = sc_L_molec*L_molec;
+T_AU = sc_T_molec*T_molec;
 
 aTci = k_aTc*u_aTc/(g_p+k_aTc);
 IPTGi = k_iptg*u_IPTG/(g_p+k_iptg);
