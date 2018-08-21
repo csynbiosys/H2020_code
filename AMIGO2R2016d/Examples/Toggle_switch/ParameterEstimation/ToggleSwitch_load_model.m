@@ -23,4 +23,4 @@ model.eqns=...                                                              % Eq
 % PARAMETER VALUES
 % =================
 
-model.par=[]; % Parameter values
+model.par=[5.005,0.1386,1.5005,300.1,50.5,500.5,3,3,0.0165,5.005,1.5005,300.1,18685,3030,3,3,505,505,0.0055,0.0055]; % Parameter values set to the average of global_theta_guess min, max

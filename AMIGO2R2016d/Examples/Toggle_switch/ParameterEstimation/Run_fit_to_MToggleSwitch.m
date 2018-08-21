@@ -12,35 +12,24 @@ AMIGO_Startup();
 cd ('Examples/Toggle_switch/ParameterEstimation');
 
 % Specify the allowed boundaries for the parameters
-model.par_names=char('kL_p','gm','kLm0','kLm','theta_T','theta_aTc','n_aTc','n_T','g_p',...
-                     'kT_p','kTm0','kTm','theta_L','theta_IPTG','n_IPTG','n_L',...
-                     'sc_T_molec',...
-                     'sc_L_molec',...
-                     'k_iptg',...
-                     'k_aTc'); 
-theta_min = [];
-theta_max = [];
+theta_min = [0.01,0.001,0.2,1,1,2,2,0.01,0.001,0.2,370,60,2,2,10,10,0.001,0.001];
+theta_max = [10,3,600,100,1000,4,4,10,3,600,37000,6000,4,4,1000,1000,0.01,0.01];
 
-% Create a matrix of initial guesses for the parameters, having as many
-% rows as the number of PE iterations (numExperiments)
-% Each vector is passed as input to the computing function
-M_norm = lhsdesign(numExperiments,length(theta_min));
-M = zeros(size(M_norm));
-for c=1:size(M_norm,2)
-    for r=1:size(M_norm,1)
-        M(r,c) = 10^(M_norm(r,c)*(log10(theta_max(1,c))-log10(theta_min(1,c)))+log10(theta_min(1,c))); % log exploration
-    end
-end 
-model.par_names=char('kL_p','gm','kLm0','kLm','theta_T','theta_aTc','n_aTc','n_T','g_p',...
-                     'kT_p','kTm0','kTm','theta_L','theta_IPTG','n_IPTG','n_L',...
-                     'sc_T_molec',...
-                     'sc_L_molec',...
-                     'k_iptg',...
-                     'k_aTc'); 
 
-% check the location of the parameters that are fixed
-ParFull = [M(:,1:2) 7.75e-5*ones(size(M,1),1) M(:,3:8) 2800*ones(size(M,1),1) M(:,9:end)];
-save('MatrixParameters.mat','ParFull');
+% % Create a matrix of initial guesses for the parameters, having as many
+% % rows as the number of PE iterations (numExperiments)
+% % Each vector is passed as input to the computing function
+% M_norm = lhsdesign(numExperiments,length(theta_min));
+% M = zeros(size(M_norm));
+% for c=1:size(M_norm,2)
+%     for r=1:size(M_norm,1)
+%         M(r,c) = 10^(M_norm(r,c)*(log10(theta_max(1,c))-log10(theta_min(1,c)))+log10(theta_min(1,c))); % log exploration
+%     end
+% end 
+% 
+% % check the location of the parameters that are fixed
+% ParFull = [M(:,1) 0.1386*ones(size(M,1),1) M(:,2:7) 0.0165*ones(size(M,1),1) M(:,8:end)];
+% save('MatrixParameters.mat','ParFull');
 
 load('MatrixParameters.mat');
 

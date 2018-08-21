@@ -42,8 +42,9 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     ToggleSwitch_load_model; 
 
     % Initial guesses for theta
-    global_theta_min = [];
-    global_theta_max = [];
+
+    global_theta_min = [0.01,0.1386,0.001,0.2,1,1,2,2,0.0165,0.01,0.001,0.2,370,60,2,2,10,10,0.001,0.001];
+    global_theta_max = [10,0.1386,3,600,100,1000,4,4,0.0165,10,3,600,37000,6000,4,4,1000,1000,0.01,0.01];
 
     global_theta_guess = global_theta_guess';
     
