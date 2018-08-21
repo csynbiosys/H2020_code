@@ -33,6 +33,9 @@ T_AU = InitialStates_AU(2);
 L_molec = L_AU/sc_L_molec;
 T_molec = T_AU/sc_T_molec;
 
+aTci = k_aTc*u_aTc/(g_p+k_aTc);
+IPTGi = k_iptg*u_IPTG/(g_p+k_iptg);
+
 L_m_dummy = 1/g_m*(kLm0 + (kLm/(1+(T_molec/theta_T*(1/(1+(aTci/theta_aTc)^n_aTc)))^n_T)));
 
 T_m_dummy = 1/g_m*(kTm0 + (kTm/(1+(L_molec/theta_L*(1/(1+(IPTGi/theta_IPTG)^n_IPTG)))^n_L)));
@@ -44,8 +47,7 @@ T_molec = kT_p/g_p*T_m_dummy;
 L_AU = sc_L_molec*L_molec;
 T_AU = sc_T_molec*T_molec;
 
-aTci = k_aTc*u_aTc/(g_p+k_aTc);
-IPTGi = k_iptg*u_IPTG/(g_p+k_iptg);
+
 
 
 res = [L_molec T_molec L_AU T_AU aTci IPTGi];

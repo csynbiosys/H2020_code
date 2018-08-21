@@ -42,7 +42,7 @@ newExps.t_f{1}=[duration;duration];                % Experiment duration
     
 newExps.u_interp{1}={'sustained'; 'sustained'};
 newExps.u{1}=[IPTGe; aTce];
-newExps.t_con{1}=[0 0; duration duration]; 
+newExps.t_con{1}=[0,duration;0, duration]; 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Mock an experiment
