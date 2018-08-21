@@ -17,7 +17,7 @@ results_folder = strcat('ToggleSwitch_rep',datestr(now,'yyyy-mm-dd-HHMMSS'));
 short_name     = 'TogSwitch';
 
 % Read the model into the model variable
-PLac_load_model;
+ToggleSwitch_load_model;
 
 % Compile the model
 clear inputs;
