@@ -38,7 +38,7 @@ for data_set=1:length(data)
     rfp_std = nanstd(data(data_set).val.rfpMothers,[],2);
     index = linspace(1,length(time_rfp_min),length(time_rfp_min));
     rowsi = strread(num2str(index),'%s');
-    Data= table(time_rfp_min',time_gfp_min',gfp_mean,gfp_std,rfp_mean,rfp_std,'RowNames',rowsi);
+    Data= table(time_gfp_min',gfp_mean,gfp_std,time_rfp_min',rfp_mean,rfp_std,'RowNames',rowsi);
     writetable(Data,strcat(data_to_compare{data_set},'_Expression.csv'));    
     GFP_start_mean = [GFP_start_mean,gfp_mean(1)];
     GFP_start_std = [GFP_start_std,gfp_std(1)];
