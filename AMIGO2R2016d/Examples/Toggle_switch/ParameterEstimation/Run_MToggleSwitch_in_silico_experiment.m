@@ -10,7 +10,7 @@ cd ('../../../');
 AMIGO_Startup();
 
 cd ('Examples/Toggle_switch/ParameterEstimation');
-% b) Simulation of the dynamic to a step to 5 uM of IPTG (Figure 2b)
+
 IPTGExt = [1];%0.25];
 aTcExt = [0];%20];
 for epcc_exps=1:numExperiments

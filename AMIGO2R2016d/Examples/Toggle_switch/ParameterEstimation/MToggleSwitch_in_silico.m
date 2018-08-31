@@ -1,7 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Script to simulate the MToggleSwitch model in response to a step in IPTG,
 % aTc
-% concentration specified in Run_MPLacr_in_silico_experiment
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 global epccOutputResultFileNameBase;
@@ -38,10 +37,10 @@ newExps.obs_names{iexp} = char('RFP','GFP');
 newExps.obs{iexp} = char('RFP = L_AU','GFP = T_AU');% Name of the observables 
 newExps.exp_y0{1}=ToggleSwitch_Compute_SteadyState(model.par,[42.5654936001928,1521.33340938933],0,0);    
     
-newExps.t_f{1}=[duration;duration];                % Experiment duration
+newExps.t_f{1}=duration;                % Experiment duration
     
-newExps.u_interp{1}={'sustained'; 'sustained'};
-newExps.u{1}=[IPTGe; aTce];
+newExps.u_interp{1}='sustained';
+newExps.u{1}= [IPTGe; aTce];
 newExps.t_con{1}=[0,duration;0, duration]; 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
