@@ -1,11 +1,11 @@
 function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,global_theta_guess)
  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% fit_to_ToggleSwitch - runs PE of the model structure we propose for the Toggle Switch to the experimental data published in Lugagne et al., 2017.
-% The 26 experiments are randomised and split in training (17 experiments)
-% and test (9
-% experiments) sets.
-% PE is run, starting from 100 initial guesses for the parameters, on the training set.
-% Each vector of estimates is used to compute the SSE over the test set. 
+% fit_to_ToggleSwitch - runs PE of the model structure we propose for the Toggle Switch to the calibration data published in Lugagne et al., 2017.
+% PE is run, starting from 100 initial guesses for the parameters, on the whole dataset.
+% An analytical solution for the steady state is used to define the initial
+% conditions in a simulation of the system response to sustained inputs (48hrs)
+% equal to the ON conditions. 
+% Each vector of estimates is used to compute the SSE over the whole set. 
 % Hence the estimate yielding the minimum SSE is selected. 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -33,10 +33,11 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     short_name     = strcat('TSF');
  
     % Load experimental data. This data are derived, using the script
-    % ExtractionAllExperimentalData/ExtractionStructure_AllData.m, starting from data used in the paper
-    % Lugagne et al. Please note that as of yet there are doubts about the
-    % data. 
-    load('AllDataLugagne.mat');
+    % ExtractionAllExperimentalData/ExtractionCalibrationData.m, starting from data used in the paper
+    % Lugagne et al. Please note that as of yet, there are doubts about the
+    % data (We are waiting for clarifications on them from the authors, 
+    % but a report justifying the current choices is available (Report2Sept2018.docx))
+    load('LugagneCalibrationData.mat');
  
     % Read the model into the model variable
     ToggleSwitch_load_model; 
@@ -48,15 +49,18 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     global_theta_guess = global_theta_guess';
     
     % Randomized vector of experiments
-    exps_indexall = [22,6,3,16,11,7,17,14,8,5,21,25,26,19,15,1,23,2,4,18,24,13,9,20,10,12];
+    exps_indexall = 1:1:6;
     % Definition of the Training set 
-    exps_indexTraining = exps_indexall(1:17);
+    exps_indexTraining = exps_indexall;
     % Definition of test set 
-    exps_indexTest =  exps_indexall(18:end);
+    exps_indexTest =  exps_indexall;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Run  PE on the training set
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    inputs.model = model;
+    inputs.model.par = global_theta_guess;
+    
     % Define the exps structure, containing the experimental data to fit
     exps.n_exp = length(exps_indexTraining);
     
@@ -66,20 +70,22 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         exps.n_obs{iexp} = 2; 
         exps.obs_names{iexp} = char('RFP','GFP');
         exps.obs{iexp} = char('RFP = L_AU','GFP = T_AU');
-        exps.t_f{iexp} = Data.t_con{1,exp_indexData}(:,end); 
+        exps.t_f{iexp} = Data.t_con{1,exp_indexData}(1,end); 
         exps.n_s{iexp} = Data.n_samples{1,exp_indexData};
         exps.t_s{iexp} = Data.t_samples{1,exp_indexData}; 
-        exps.u_interp{iexp} = {'step','step'};
-        exps.t_con{iexp} = Data.t_con{1,exp_indexData};
-        exps.n_steps{iexp} = ones(2,1).*(length(exps.t_con{iexp})-1);
-
+        exps.u_interp{iexp} = 'step';
+        exps.t_con{iexp} = Data.t_con{1,exp_indexData}(1,:);
+        exps.n_steps{iexp} = length(exps.t_con{iexp})-1;
+        exps.u{iexp} = Data.input{1,iexp};
         exps.data_type = 'real';
         exps.noise_type = 'homo';
+        
         exps.exp_data{iexp} = Data.exp_data{1,exp_indexData};
         exps.error_data{iexp} = Data.standard_dev{1,exp_indexData};
+        
         % Compute the steady state considering the initial theta guess, u_IPTG and
         % u_aTc
-        y0 = ToggleSwitch_Compute_SteadyState(global_theta_guess,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
+        y0 = ToggleSwitch_Compute_SteadyState_OverNight(model,global_theta_guess,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
         exps.exp_y0{iexp} = y0;
     end
 
@@ -172,20 +178,22 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         exps.n_obs{iexp} = 2; 
         exps.obs_names{iexp} = char('RFP','GFP');
         exps.obs{iexp} = char('RFP = L_AU','GFP = T_AU');
-        exps.t_f{iexp} = Data.t_con{1,exp_indexData}(:,end); 
+        exps.t_f{iexp} = Data.t_con{1,exp_indexData}(1,end); 
         exps.n_s{iexp} = Data.n_samples{1,exp_indexData};
         exps.t_s{iexp} = Data.t_samples{1,exp_indexData}; 
-        exps.u_interp{iexp} = {'step','step'};
-        exps.t_con{iexp} = Data.t_con{1,exp_indexData};
-        exps.n_steps{iexp} = ones(2,1).*(length(exps.t_con{iexp})-1);
-
+        exps.u_interp{iexp} = 'step';
+        exps.t_con{iexp} = Data.t_con{1,exp_indexData}(1,:);
+        exps.n_steps{iexp} = length(exps.t_con{iexp})-1;
+        exps.u{iexp} = Data.input{1,iexp};
         exps.data_type = 'real';
         exps.noise_type = 'homo';
+        
         exps.exp_data{iexp} = Data.exp_data{1,exp_indexData};
         exps.error_data{iexp} = Data.standard_dev{1,exp_indexData};
+        
         % Compute the steady state considering the initial theta guess, u_IPTG and
         % u_aTc
-        y0 = ToggleSwitch_Compute_SteadyState(best_global_theta,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
+        y0 = ToggleSwitch_Compute_SteadyState_OverNight(model,best_global_theta,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
         exps.exp_y0{iexp} = y0;
 
     end

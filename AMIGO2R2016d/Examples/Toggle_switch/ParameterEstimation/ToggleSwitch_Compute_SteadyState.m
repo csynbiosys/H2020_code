@@ -50,6 +50,6 @@ T_AU = sc_T_molec*T_molec;
 
 
 
-res = [L_molec T_molec L_AU T_AU aTci IPTGi];
+res = [L_molec T_molec T_AU L_AU IPTGi aTci];
 end
 

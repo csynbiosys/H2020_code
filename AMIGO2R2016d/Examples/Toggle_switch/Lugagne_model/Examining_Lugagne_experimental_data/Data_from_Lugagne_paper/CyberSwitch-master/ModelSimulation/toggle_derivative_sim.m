@@ -27,10 +27,13 @@ switch size(y,3)
         dydt(2) = p.crt + p.cit * hill_func(y(3) * hill_func(y(5),p.kiptg,p.miptg),p.k_l,p.nl) - p.delta_mrnat*y(2);%dtetrM(y(3),y(5),y(2),p);
         dydt(3) = p.cl*y(1) - p.deltal*y(3);
         dydt(4) = p.ct*y(2) - p.deltat*y(4);
-%                 dydt(5) = (iptg_ext - y(5))/(p.iptgdelay1/60);
-                 dydt(5) = max((iptg_ext - y(5))/(p.iptgdelay1/60),0)-max((y(5)-iptg_ext)/(p.iptgdelay2/60),0);
+        dydt(5) = (iptg_ext - y(5))/(p.iptgdelay1/60);
+        %dydt(5) = max((iptg_ext -
+        %y(5))/(p.iptgdelay1/60),0)-max((y(5)-iptg_ext)/(p.iptgdelay2/60),0);
+        %Luci commented: I think this is for the identification to all
+        %experiments, while the uncommented dydt(5)
 
-     dydt(6) = max((atc_ext - y(6))/(p.atcdelay1/60),0)-max((y(6)-atc_ext)/(p.atcdelay2/60),0);
+       dydt(6) = max((atc_ext - y(6))/(p.atcdelay1/60),0)-max((y(6)-atc_ext)/(p.atcdelay2/60),0);
     case 4 % Quiver mode
         dydt= zeros([size(y),4]);
         dydt(:,:,3) = p.cl*y(:,:,1) - p.deltal*y(:,:,3); %dlaciP(y(:,:,1),y(:,:,3),p); 
