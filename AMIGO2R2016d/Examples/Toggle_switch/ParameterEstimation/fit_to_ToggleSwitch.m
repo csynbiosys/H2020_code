@@ -40,11 +40,11 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     load('LugagneCalibrationData.mat');
  
     % Read the model into the model variable
-    ToggleSwitch_load_model; 
+    ToggleSwitch_load_model_recasted; 
 
     % Initial guesses for theta
-    global_theta_min = [0.01,0.1386,0.0005,0.1,1,1,2,2,0.0165,0.01,0.001,0.1,0.001,60,2,2,10,10,0.001,0.001];
-    global_theta_max = [10,0.1386,1,100,100,1000,4,4,0.0165,10,3,100,1,6000,4,4,1000,1000,0.1,0.1];
+    global_theta_min = [0.1386,5e-06,0.001,40,0.00042643,2,2,0.0165,1e-05,0.001,0.0222,0.0001,2,2,10,10,0.001,0.001]; % verify Theta_T is correct 
+    global_theta_max = [0.1386,10,1000,40,0.42643,4,4,0.0165,30,1000,0.0222,0.01,4,4,1000,1000,0.1,0.1];
 
     global_theta_guess = global_theta_guess';
     
@@ -71,8 +71,8 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         exps.obs_names{iexp} = char('RFP','GFP');
         exps.obs{iexp} = char('RFP = L_AU','GFP = T_AU');
         exps.t_f{iexp} = Data.t_con{1,exp_indexData}(1,end); 
-        exps.n_s{iexp} = Data.n_samples{1,exp_indexData};
-        exps.t_s{iexp} = Data.t_samples{1,exp_indexData}; 
+        exps.n_s{iexp} = Data.n_samples{1,exp_indexData}(1,1);
+        exps.t_s{iexp} = Data.t_samples{1,exp_indexData}(1,:); 
         exps.u_interp{iexp} = 'step';
         exps.t_con{iexp} = Data.t_con{1,exp_indexData}(1,:);
         exps.n_steps{iexp} = length(exps.t_con{iexp})-1;
@@ -85,13 +85,13 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         
         % Compute the steady state considering the initial theta guess, u_IPTG and
         % u_aTc
-        y0 = ToggleSwitch_Compute_SteadyState_OverNight(model,global_theta_guess,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
+        y0 = ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,model,global_theta_guess,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
         exps.exp_y0{iexp} = y0;
     end
 
     best_global_theta = global_theta_guess; 
-    % g_m and g_p excluded from identification
-    param_including_vector = [true,false,true,true,true,true,true,true,false,true,true,true,true,true,true,true,true,true,true,true];
+    % g_m, g_p, theta_T and theta_L excluded from identification
+    param_including_vector = [false,true,true,false,true,true,true,false,true,true,false,true,true,true,true,true,true,true];
 
     % Compile the model
     clear inputs;
@@ -131,9 +131,7 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     inputs.nlpsol.nlpsolver='eSS';
     inputs.nlpsol.eSS.maxeval = 200000;
     inputs.nlpsol.eSS.maxtime = 5000;
-    param_including_vector = [true,false,true,true,true,true,true,true,false,true,true,true,true,true,true,true,true,true,true,true];
-
-    inputs.nlpsol.eSS.log_var = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18];
+    inputs.nlpsol.eSS.log_var = [1 2 3 4 5 6 7 8 9 10 11 12 13 14];
     inputs.nlpsol.eSS.local.solver = 'lsqnonlin'; 
     inputs.nlpsol.eSS.local.finish = 'lsqnonlin'; 
     %inputs.rid.conf_ntrials=500;
@@ -179,8 +177,8 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         exps.obs_names{iexp} = char('RFP','GFP');
         exps.obs{iexp} = char('RFP = L_AU','GFP = T_AU');
         exps.t_f{iexp} = Data.t_con{1,exp_indexData}(1,end); 
-        exps.n_s{iexp} = Data.n_samples{1,exp_indexData};
-        exps.t_s{iexp} = Data.t_samples{1,exp_indexData}; 
+        exps.n_s{iexp} = Data.n_samples{1,exp_indexData}(1,1);
+        exps.t_s{iexp} = Data.t_samples{1,exp_indexData}(1,1); 
         exps.u_interp{iexp} = 'step';
         exps.t_con{iexp} = Data.t_con{1,exp_indexData}(1,:);
         exps.n_steps{iexp} = length(exps.t_con{iexp})-1;
@@ -193,7 +191,7 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         
         % Compute the steady state considering the initial theta guess, u_IPTG and
         % u_aTc
-        y0 = ToggleSwitch_Compute_SteadyState_OverNight(model,best_global_theta,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
+        y0 = ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,model,best_global_theta,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
         exps.exp_y0{iexp} = y0;
 
     end

@@ -9,29 +9,25 @@ function [] = Run_fit_to_MToggleSwitch( resultBase, numExperiments )
 cd ('../../../');
 AMIGO_Startup();
 
-cd ('Examples/Toggle_switch/ParameterEstimation');
-
-% Specify the allowed boundaries for the parameters
-theta_min = [0.01,0.0005,0.1,1,1,2,2,0.01,0.001,0.1,0.001,60,2,2,10,10,0.001,0.001];
-theta_max = [10,1,100,100,1000,4,4,10,3,100,1,6000,4,4,1000,1000,0.1,0.1];
-
-
 % Create a matrix of initial guesses for the parameters, having as many
 % rows as the number of PE iterations (numExperiments)
 % Each vector is passed as input to the computing function
-M_norm = lhsdesign(numExperiments,length(theta_min));
-M = zeros(size(M_norm));
-for c=1:size(M_norm,2)
-    for r=1:size(M_norm,1)
-        M(r,c) = 10^(M_norm(r,c)*(log10(theta_max(1,c))-log10(theta_min(1,c)))+log10(theta_min(1,c))); % log exploration
-    end
-end 
+% theta_min = [5e-6,1e-3,4.2643e-4,2,2,1e-5,1e-3,1e-4,2,2,10,10,0.001,0.001];
+% theta_max = [10,1000,4.2643e-1,4,4,30,1000,1e-2,4,4,1000,1000,0.1,0.1];
+% M_norm = lhsdesign(numExperiments,length(theta_min));
+% M = zeros(size(M_norm));
+% for c=1:size(M_norm,2)
+%     for r=1:size(M_norm,1)
+%         M(r,c) = 10^(M_norm(r,c)*(log10(theta_max(1,c))-log10(theta_min(1,c)))+log10(theta_min(1,c))); % log exploration
+%     end
+% end 
+% 
+% %check the location of the parameters that are fixed
+% ParFull = [0.1386*ones(size(M,1),1) M(:,1:2) 40*ones(size(M,1),1) M(:,3:5) 0.0165*ones(size(M,1),1) M(:,6:7) 0.0222*ones(size(M,1),1) M(:,8:end)];
+% save('MatrixParameters.mat','ParFull');
 
-% check the location of the parameters that are fixed
-ParFull = [M(:,1) 0.1386*ones(size(M,1),1) M(:,2:7) 0.0165*ones(size(M,1),1) M(:,8:end)];
-save('MatrixParameters.mat','ParFull');
 
-%load('MatrixParameters.mat');
+load('MatrixParameters.mat');
 
 parfor epcc_exps=1:numExperiments
         try

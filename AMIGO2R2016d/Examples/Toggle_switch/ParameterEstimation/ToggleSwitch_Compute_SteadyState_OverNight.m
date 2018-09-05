@@ -1,4 +1,4 @@
-function [InitialConditions]= ToggleSwitch_Compute_SteadyState_OverNight(model,params,InitialExpData,IPTGe,aTce)
+function [InitialConditions]= ToggleSwitch_Compute_SteadyState_OverNight(epcc_exps,model,params,InitialExpData,IPTGe,aTce)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Script to simulate the initial state of the MToggleSwitch model after the
 % ON inclubation, where cells are exposed to . We assume that the system is at steady state
@@ -26,7 +26,7 @@ newExps.n_exp = 1;
 newExps.n_obs{1}=2;                                  % Number of observables per experiment                         
 newExps.obs_names{1} = char('RFP','GFP');
 newExps.obs{1} = char('RFP = L_AU','GFP = T_AU');% Name of the observables 
-newExps.exp_y0{1}=ToggleSwitch_Compute_SteadyState(model,params,InitialExpData,IPTGe,aTce);     
+newExps.exp_y0{1}=ToggleSwitch_Compute_SteadyState(params,InitialExpData,IPTGe,aTce);     
 newExps.t_f{1}=duration;               % Experiment duration
     
 newExps.u_interp{1}='sustained';
@@ -42,7 +42,7 @@ inputs.plotd.plotlevel='noplot';
     
 inputs.pathd.results_folder = results_folder;                        
 inputs.pathd.short_name     = short_name;
-inputs.pathd.runident       = strcat('sim-',int2str(ip));
+inputs.pathd.runident       = strcat('sim-',int2str(epcc_exps));
 
 % SIMULATION
 inputs.ivpsol.ivpsolver='cvodes';
@@ -52,6 +52,6 @@ inputs.ivpsol.atol=1.0D-7;
     
 sim = AMIGO_SModel(inputs);
 
-InitialConditions = sim.sim.states(end,:);
+InitialConditions = sim.sim.states{1,1}(end,:);
 
 end
