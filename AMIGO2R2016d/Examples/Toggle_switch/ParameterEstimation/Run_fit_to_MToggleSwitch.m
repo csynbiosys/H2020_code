@@ -8,12 +8,13 @@ function [] = Run_fit_to_MToggleSwitch( resultBase, numExperiments )
 % In the paper we used numExperiments = 100.
 cd ('../../../');
 AMIGO_Startup();
+cd('Examples\Toggle_switch\ParameterEstimation');
 
 % Create a matrix of initial guesses for the parameters, having as many
 % rows as the number of PE iterations (numExperiments)
 % Each vector is passed as input to the computing function
-% theta_min = [5e-6,1e-3,4.2643e-4,2,2,1e-5,1e-3,1e-4,2,2,10,10,0.001,0.001];
-% theta_max = [10,1000,4.2643e-1,4,4,30,1000,1e-2,4,4,1000,1000,0.1,0.1];
+% theta_min = [5e-6,1e-3,1,2,2,1e-5,1e-3,1e-4,2,2,10,10,0.001,0.001];
+% theta_max = [10,1000,100,4,4,30,1000,1e-2,4,4,1000,1000,0.1,0.1];
 % M_norm = lhsdesign(numExperiments,length(theta_min));
 % M = zeros(size(M_norm));
 % for c=1:size(M_norm,2)
@@ -23,7 +24,7 @@ AMIGO_Startup();
 % end 
 % 
 % %check the location of the parameters that are fixed
-% ParFull = [0.1386*ones(size(M,1),1) M(:,1:2) 40*ones(size(M,1),1) M(:,3:5) 0.0165*ones(size(M,1),1) M(:,6:7) 0.0222*ones(size(M,1),1) M(:,8:end)];
+% ParFull = [0.1386*ones(size(M,1),1) M(:,1:2) 40*ones(size(M,1),1) M(:,3:5) 0.0165*ones(size(M,1),1) M(:,6:7) 0.0215*ones(size(M,1),1) M(:,8:end)];
 % save('MatrixParameters.mat','ParFull');
 
 
@@ -34,6 +35,7 @@ parfor epcc_exps=1:numExperiments
             global_theta_guess = ParFull(epcc_exps,:);
             epccOutputResultFileNameBase = [resultBase,'-',num2str(epcc_exps)];
             [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,global_theta_guess);
+            %[out] = LookingForNegativeSolutions(epccOutputResultFileNameBase,epcc_exps,global_theta_guess);
         catch err
             %open file
             errorFile = [resultBase,'-',num2str(epcc_exps),'.errorLog'];

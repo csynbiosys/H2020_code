@@ -30,7 +30,7 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     
     % Specify folder name and short_name
     results_folder = strcat('ToggleSwitchFit',datestr(now,'yyyy-mm-dd-HHMMSS'));
-    short_name     = strcat('TSF');
+    short_name     = strcat('TSF',int2str(epcc_exps));
  
     % Load experimental data. This data are derived, using the script
     % ExtractionAllExperimentalData/ExtractionCalibrationData.m, starting from data used in the paper
@@ -40,11 +40,11 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     load('LugagneCalibrationData.mat');
  
     % Read the model into the model variable
-    ToggleSwitch_load_model_recasted; 
+    ToggleSwitch_load_model_recasted_constraints; 
 
-    % Initial guesses for theta
-    global_theta_min = [0.1386,5e-06,0.001,40,0.00042643,2,2,0.0165,1e-05,0.001,0.0222,0.0001,2,2,10,10,0.001,0.001]; % verify Theta_T is correct 
-    global_theta_max = [0.1386,10,1000,40,0.42643,4,4,0.0165,30,1000,0.0222,0.01,4,4,1000,1000,0.1,0.1];
+    % Initial guesses for theta 
+    global_theta_min = [0.1386,5e-06,1,40,0.00042643,2,2,0.0165,1e-05,0.001,0.0215,0.0001,2,2,10,10,0.001,0.001]; % verify Theta_T is correct 
+    global_theta_max = [0.1386,10,100,40,0.42643,4,4,0.0165,30,1000,0.0215,0.01,4,4,1000,1000,0.1,0.1];
 
     global_theta_guess = global_theta_guess';
     
@@ -55,11 +55,30 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     % Definition of test set 
     exps_indexTest =  exps_indexall;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Run  PE on the training set
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% % Run  PE on the training set
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Compile the model
+    clear inputs;
     inputs.model = model;
     inputs.model.par = global_theta_guess;
+    %inputs.exps  = exps;
+
+    inputs.pathd.results_folder = results_folder;                        
+    inputs.pathd.short_name     = short_name;
+    inputs.pathd.runident       = 'initial_setup';
+    
+    AMIGO_Prep(inputs);
+    
+    % Compute the steady state considering the initial theta guess, u_IPTG and
+    % u_aTc
+    Y0 = zeros(length(exps_indexTraining),10);
+    for iexp=1:length(exps_indexTraining)
+        exp_indexData = exps_indexTraining(iexp);
+        Y0(iexp,:) = ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,inputs,iexp,global_theta_guess,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
+    end
+    
+     clear exps;
     
     % Define the exps structure, containing the experimental data to fit
     exps.n_exp = length(exps_indexTraining);
@@ -80,15 +99,12 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         exps.data_type = 'real';
         exps.noise_type = 'homo';
         
-        exps.exp_data{iexp} = Data.exp_data{1,exp_indexData};
-        exps.error_data{iexp} = Data.standard_dev{1,exp_indexData};
-        
-        % Compute the steady state considering the initial theta guess, u_IPTG and
-        % u_aTc
-        y0 = ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,model,global_theta_guess,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
-        exps.exp_y0{iexp} = y0;
+        exps.exp_data{iexp} = Data.exp_data{1,exp_indexData}';
+        exps.error_data{iexp} = Data.standard_dev{1,exp_indexData}';
+        exps.exp_y0{iexp} = Y0(iexp,:);
     end
 
+    
     best_global_theta = global_theta_guess; 
     % g_m, g_p, theta_T and theta_L excluded from identification
     param_including_vector = [false,true,true,false,true,true,true,false,true,true,false,true,true,true,true,true,true,true];
@@ -116,25 +132,33 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     inputs.PEsol.global_theta_max=global_theta_max(param_including_vector);  % Maximum allowed values for the paramters
     inputs.PEsol.global_theta_min=global_theta_min(param_including_vector);  % Minimum allowed values for the parameters
  
-    % COST FUNCTION RELATED DATA
+    %COST FUNCTION RELATED DATA
     inputs.PEsol.PEcost_type='lsq';                       % 'lsq' (weighted least squares default) | 'llk' (log likelihood) | 'user_PEcost'
     inputs.PEsol.lsq_type='Q_expmax';
     inputs.PEsol.llk_type='homo_var';                     % [] To be defined for llk function, 'homo' | 'homo_var' | 'hetero'
  
-    % SIMULATION
+    %SIMULATION
     inputs.ivpsol.ivpsolver='cvodes';
     inputs.ivpsol.senssolver='cvodes';
-    inputs.ivpsol.rtol=1.0D-8;
-    inputs.ivpsol.atol=1.0D-8;
+    inputs.ivpsol.rtol=1.0D-14;
+    inputs.ivpsol.atol=1.0D-14;
 
-    % OPTIMIZATION
+    %OPTIMIZATION
     inputs.nlpsol.nlpsolver='eSS';
     inputs.nlpsol.eSS.maxeval = 200000;
     inputs.nlpsol.eSS.maxtime = 5000;
     inputs.nlpsol.eSS.log_var = [1 2 3 4 5 6 7 8 9 10 11 12 13 14];
     inputs.nlpsol.eSS.local.solver = 'lsqnonlin'; 
     inputs.nlpsol.eSS.local.finish = 'lsqnonlin'; 
-    %inputs.rid.conf_ntrials=500;
+    inputs.rid.conf_ntrials=500;
+    
+    % FINAL-TIME CONSTRAINTS
+    for iexp=1:inputs.exps.n_exp
+        inputs.exps.n_const_ineq_tf{iexp} = 4;
+        inputs.exps.const_ineq_tf{iexp} = char('L_molec_viol','T_molec_viol','IPTGi_viol','aTci_viol');
+    end
+    inputs.exps.ineq_const_max_viol = 1e-6;
+    
 
     pe_start = now;
     pe_inputs = inputs;
@@ -142,10 +166,10 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     pe_results = results;
     pe_end = now;
     
-    % Save the best theta
+    %Save the best theta
     best_global_theta(param_including_vector) = results.fit.thetabest;
     
-    % Write results to the output file
+    %Write results to the output file
     fid = fopen(resultFileName,'a');
     used_par_names = model.par_names(param_including_vector,:);
     
@@ -153,19 +177,29 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         fprintf(fid,'PARAM_FIT %s %f\n', used_par_names(j,:), results.fit.thetabest(j));
     end
  
-    % Time in seconds
+    %Time in seconds
     fprintf(fid,'PE_TIME %.1f\n', (pe_end-pe_start)*24*60*60);
     fclose(fid);
     
     save([strcat(epccOutputResultFileNameBase,'.mat')],'pe_results','exps','pe_inputs','best_global_theta');
     
-    
-    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Run simulation on the test set
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     clear inputs;
     clear exps;
+    
+    inputs.model = model;
+    inputs.model.par = best_global_theta;
+    % Compute the steady state considering the initial theta guess, u_IPTG and
+    % u_aTc
+    Y0_test = zeros(length(exps_indexTest),10);
+    for iexp=1:length(exps_indexTest)
+        exp_indexData = exps_indexTest(iexp);
+        Y0_test(iexp,:) = ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,inputs,iexp,best_global_theta,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
+    end
     
     exps.n_exp = length(exps_indexTest);
     
@@ -178,7 +212,7 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         exps.obs{iexp} = char('RFP = L_AU','GFP = T_AU');
         exps.t_f{iexp} = Data.t_con{1,exp_indexData}(1,end); 
         exps.n_s{iexp} = Data.n_samples{1,exp_indexData}(1,1);
-        exps.t_s{iexp} = Data.t_samples{1,exp_indexData}(1,1); 
+        exps.t_s{iexp} = Data.t_samples{1,exp_indexData}(1,:); 
         exps.u_interp{iexp} = 'step';
         exps.t_con{iexp} = Data.t_con{1,exp_indexData}(1,:);
         exps.n_steps{iexp} = length(exps.t_con{iexp})-1;
@@ -186,18 +220,13 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         exps.data_type = 'real';
         exps.noise_type = 'homo';
         
-        exps.exp_data{iexp} = Data.exp_data{1,exp_indexData};
-        exps.error_data{iexp} = Data.standard_dev{1,exp_indexData};
-        
-        % Compute the steady state considering the initial theta guess, u_IPTG and
-        % u_aTc
-        y0 = ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,model,best_global_theta,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
-        exps.exp_y0{iexp} = y0;
+        exps.exp_data{iexp} = Data.exp_data{1,exp_indexData}';
+        exps.error_data{iexp} = Data.standard_dev{1,exp_indexData}';
+        exps.exp_y0{iexp} = Y0_test(iexp,:);
 
     end
    
-    inputs.model = model;
-    inputs.model.par = best_global_theta;
+
     inputs.exps  = exps;
 
     inputs.pathd.results_folder = results_folder;
@@ -205,31 +234,23 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     inputs.pathd.runident       ='-sim';
     inputs.plotd.plotlevel='noplot';
     
-    AMIGO_Prep(inputs);
-
-    % SIMULATION
-    inputs.ivpsol.ivpsolver='cvodes';
-    inputs.ivpsol.senssolver='cvodes';
-    inputs.ivpsol.rtol=1.0D-8;
-    inputs.ivpsol.atol=1.0D-8;
-
-    %inputs.plotd.plotlevel='full';
     sim_results = AMIGO_SObs(inputs);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Compute SSE on the test set
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    SSE = zeros(size(exps_indexTest));
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%Compute SSE on the test set
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    SSE = zeros(length(exps_indexTest),2);
     for iexp=1:length(exps_indexTest)
         exp_indexData = exps_indexTest(iexp);
-        SSE(iexp) = sum((Data.exp_data{1,exp_indexData}-sim_results.sim.sim_data{1,iexp}).^2);
+        SSE_RFP(iexp) = sum((Data.exp_data{1,exp_indexData}(1,:)-sim_results.sim.sim_data{1,iexp}(:,1)').^2);
+        SSE_GFP(iexp) = sum((Data.exp_data{1,exp_indexData}(2,:)-sim_results.sim.sim_data{1,iexp}(:,2)').^2);
+        SSE(iexp,:) = [SSE_RFP(iexp),SSE_GFP(iexp)];
     end
     
 
     sim_inputs = inputs;
     sim_exps = exps;
     save([strcat(epccOutputResultFileNameBase,'-sim','.mat')],'sim_results','sim_inputs','sim_exps','best_global_theta','SSE');
-    
 
     out = 1;
 end

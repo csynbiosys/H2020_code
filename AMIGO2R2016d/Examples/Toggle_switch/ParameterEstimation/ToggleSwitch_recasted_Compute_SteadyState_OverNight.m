@@ -1,22 +1,9 @@
-function [InitialConditions]= ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,model,params,InitialExpData,IPTGe,aTce)
+function [InitialConditions]= ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,inputs,iexp,params,InitialExpData,IPTGe,aTce)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Script to simulate the initial state of the MToggleSwitch model after the
 % ON inclubation, where cells are exposed to . We assume that the system is at steady state
 % concentration specified in Run_MPLacr_in_silico_experiment
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-results_folder = strcat('ToggleSwitch_repON',datestr(now,'yyyy-mm-dd-HHMMSS'));
-short_name     = 'TogSwitchON';
-
-% % Compile the model
-clear inputs;
-inputs.model = model;
-inputs.model.par = params; 
-inputs.pathd.results_folder = results_folder;                        
-inputs.pathd.short_name     = short_name;
-inputs.pathd.runident       = 'initial_setup';
-
-AMIGO_Prep(inputs);
       
 % Fixed parts of the experiment
 duration = 24*60;     % Duration of the experiment in min
@@ -26,7 +13,7 @@ newExps.n_exp = 1;
 newExps.n_obs{1}=2;                                  % Number of observables per experiment                         
 newExps.obs_names{1} = char('RFP','GFP');
 newExps.obs{1} = char('RFP = L_AU','GFP = T_AU');% Name of the observables 
-newExps.exp_y0{1}=ToggleSwitch_recasted_Compute_SteadyState(params,InitialExpData,IPTGe,aTce);     
+newExps.exp_y0{1}=[ToggleSwitch_recasted_Compute_SteadyState(params,InitialExpData,IPTGe,aTce),zeros(1,4)];     
 newExps.t_f{1}=duration;               % Experiment duration
     
 newExps.u_interp{1}='sustained';
@@ -39,10 +26,7 @@ newExps.t_con{1}=[0,duration];
     
 inputs.exps = newExps;
 inputs.plotd.plotlevel='noplot';
-    
-inputs.pathd.results_folder = results_folder;                        
-inputs.pathd.short_name     = short_name;
-inputs.pathd.runident       = strcat('sim-',int2str(epcc_exps));
+inputs.pathd.runident       = strcat('sim-',int2str(epcc_exps),int2str(iexp));
 
 % SIMULATION
 inputs.ivpsol.ivpsolver='cvodes';
