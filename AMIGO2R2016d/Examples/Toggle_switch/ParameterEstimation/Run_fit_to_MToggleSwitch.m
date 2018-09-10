@@ -1,11 +1,17 @@
 function [] = Run_fit_to_MToggleSwitch( resultBase, numExperiments )
 % This function runs the script for the identification of the model structure
 % we propose to describe the Toggle switch to the experimental data published in Lugagne et al., 2017.
-% Given the limited number of experimental data we do not use crossvalidation. 
+% The dataset includes 26 experiments (6 calibration+20 control). Inconsistencies noted in the original repository of
+% the paper have been addressed through private communication with the
+% authors and corrected accordingly. Parameter estimation is performed
+% using crossvalidation. To this end we split the data between training set
+% (17 randomised experiments)and test (9 experiments) set. SSE is computed
+% over the test set to select the best parameter estimates. 
 % It takes two inputs:
 % - a string with the identifier of the output files
 % - the number of iterations of parameter estimation. 
 % In the paper we used numExperiments = 100.
+
 cd ('../../../');
 AMIGO_Startup();
 cd('Examples\Toggle_switch\ParameterEstimation');
@@ -35,7 +41,6 @@ parfor epcc_exps=1:numExperiments
             global_theta_guess = ParFull(epcc_exps,:);
             epccOutputResultFileNameBase = [resultBase,'-',num2str(epcc_exps)];
             [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,global_theta_guess);
-            %[out] = LookingForNegativeSolutions(epccOutputResultFileNameBase,epcc_exps,global_theta_guess);
         catch err
             %open file
             errorFile = [resultBase,'-',num2str(epcc_exps),'.errorLog'];

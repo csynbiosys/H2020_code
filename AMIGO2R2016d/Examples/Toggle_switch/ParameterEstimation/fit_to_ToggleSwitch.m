@@ -33,13 +33,14 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     short_name     = strcat('TSF',int2str(epcc_exps));
  
     % Load experimental data. This data are derived, using the script
-    % ExtractionAllExperimentalData/ExtractionCalibrationData.m, starting from data used in the paper
-    % Lugagne et al. Please note that as of yet, there are doubts about the
-    % data (We are waiting for clarifications on them from the authors, 
-    % but a report justifying the current choices is available (Report2Sept2018.docx))
-    load('LugagneCalibrationData.mat');
+    % ExtractionAllExperimentalData/ExtractionStructure_AllData_final.m, starting from data used in the paper
+    % Lugagne et al.
+    % The data derives from 26 experiments, 6 calibration and 20 control
+    % experiments.
+    load('AllDataLugagne_Final.mat');
  
-    % Read the model into the model variable
+    % Read the model into the model variable. Note that this model encodes
+    % a path constraint to prevent negative solutions of ODEs. 
     ToggleSwitch_load_model_recasted_constraints; 
 
     % Initial guesses for theta 
@@ -49,11 +50,14 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     global_theta_guess = global_theta_guess';
     
     % Randomized vector of experiments
-    exps_indexall = 1:1:6;
-    % Definition of the Training set 
-    exps_indexTraining = exps_indexall;
-    % Definition of test set 
-    exps_indexTest =  exps_indexall;
+    exps_indexall = 1:1:length(Data.expName);
+    % Definition of the Training set. This has been obtained as
+    % randperm(length(Data.expName)) and extracting the first 17 elements.
+    % Note that here it is fixed to ensure that all global_theta_guess will
+    % be trained on the same experiments.
+    exps_indexTraining = [22,6,3,16,11,7,17,14,8,5,21,25,2,19,15,1,23];
+    % Definition of test set (remaining 9 experiments) 
+    exps_indexTest =  [2,4,18,24,13,9,20,10,12];
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % % Run  PE on the training set
@@ -62,7 +66,6 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     clear inputs;
     inputs.model = model;
     inputs.model.par = global_theta_guess;
-    %inputs.exps  = exps;
 
     inputs.pathd.results_folder = results_folder;                        
     inputs.pathd.short_name     = short_name;
@@ -72,10 +75,10 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     
     % Compute the steady state considering the initial theta guess, u_IPTG and
     % u_aTc
-    Y0 = zeros(length(exps_indexTraining),10);
+    Y0 = zeros(length(exps_indexTraining),model.n_st);
     for iexp=1:length(exps_indexTraining)
         exp_indexData = exps_indexTraining(iexp);
-        Y0(iexp,:) = ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,inputs,iexp,global_theta_guess,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
+        Y0(iexp,:) = ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,inputs,exp_indexData,global_theta_guess,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
     end
     
      clear exps;
@@ -95,7 +98,7 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         exps.u_interp{iexp} = 'step';
         exps.t_con{iexp} = Data.t_con{1,exp_indexData}(1,:);
         exps.n_steps{iexp} = length(exps.t_con{iexp})-1;
-        exps.u{iexp} = Data.input{1,iexp};
+        exps.u{iexp} = Data.input{1,exp_indexData};
         exps.data_type = 'real';
         exps.noise_type = 'homo';
         
@@ -154,8 +157,8 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     
     % FINAL-TIME CONSTRAINTS
     for iexp=1:inputs.exps.n_exp
-        inputs.exps.n_const_ineq_tf{iexp} = 4;
-        inputs.exps.const_ineq_tf{iexp} = char('L_molec_viol','T_molec_viol','IPTGi_viol','aTci_viol');
+        inputs.exps.n_const_ineq_tf{iexp} = 1;
+        inputs.exps.const_ineq_tf{iexp} = char('dsviol');
     end
     inputs.exps.ineq_const_max_viol = 1e-6;
     
@@ -181,7 +184,7 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     fprintf(fid,'PE_TIME %.1f\n', (pe_end-pe_start)*24*60*60);
     fclose(fid);
     
-    save([strcat(epccOutputResultFileNameBase,'.mat')],'pe_results','exps','pe_inputs','best_global_theta');
+    save(strcat(epccOutputResultFileNameBase,'.mat'),'pe_results','exps','pe_inputs','best_global_theta');
     
 
 %%    
@@ -195,10 +198,10 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     inputs.model.par = best_global_theta;
     % Compute the steady state considering the initial theta guess, u_IPTG and
     % u_aTc
-    Y0_test = zeros(length(exps_indexTest),10);
+    Y0_test = zeros(length(exps_indexTest),model.n_st);
     for iexp=1:length(exps_indexTest)
         exp_indexData = exps_indexTest(iexp);
-        Y0_test(iexp,:) = ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,inputs,iexp,best_global_theta,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
+        Y0_test(iexp,:) = ToggleSwitch_recasted_Compute_SteadyState_OverNight(epcc_exps,inputs,exp_indexData,best_global_theta,Data.exp_data{1,exp_indexData}(:,1)',Data.Initial_IPTG{1,exp_indexData},Data.Initial_aTc{1,exp_indexData});
     end
     
     exps.n_exp = length(exps_indexTest);
@@ -216,7 +219,7 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         exps.u_interp{iexp} = 'step';
         exps.t_con{iexp} = Data.t_con{1,exp_indexData}(1,:);
         exps.n_steps{iexp} = length(exps.t_con{iexp})-1;
-        exps.u{iexp} = Data.input{1,iexp};
+        exps.u{iexp} = Data.input{1,iexp_indexData};
         exps.data_type = 'real';
         exps.noise_type = 'homo';
         
@@ -250,7 +253,7 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
 
     sim_inputs = inputs;
     sim_exps = exps;
-    save([strcat(epccOutputResultFileNameBase,'-sim','.mat')],'sim_results','sim_inputs','sim_exps','best_global_theta','SSE');
+    save(strcat(epccOutputResultFileNameBase,'-sim','.mat'),'sim_results','sim_inputs','sim_exps','best_global_theta','SSE');
 
     out = 1;
 end
