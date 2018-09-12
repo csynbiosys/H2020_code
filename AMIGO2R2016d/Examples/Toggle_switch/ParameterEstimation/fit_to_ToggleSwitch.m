@@ -44,8 +44,8 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     ToggleSwitch_load_model_recasted_constraints; 
 
     % Initial guesses for theta 
-    global_theta_min = [0.1386,5e-06,1,40,0.00042643,2,2,0.0165,1e-05,0.001,0.0215,0.0001,2,2,10,10,0.001,0.001]; % verify Theta_T is correct 
-    global_theta_max = [0.1386,10,100,40,0.42643,4,4,0.0165,30,1000,0.0215,0.01,4,4,1000,1000,0.1,0.1];
+    global_theta_min = [0.1386,5e-06,1e-3,40,1,2,2,0.0165,1e-05,0.001,0.0215,0.0001,2,2,10,10,0.001,0.001]; % verify Theta_T is correct 
+    global_theta_max = [0.1386,10,1000,40,100,4,4,0.0165,30,1000,0.0215,0.01,4,4,1000,1000,0.1,0.1];
 
     global_theta_guess = global_theta_guess';
     
@@ -158,9 +158,10 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     % FINAL-TIME CONSTRAINTS
     for iexp=1:inputs.exps.n_exp
         inputs.exps.n_const_ineq_tf{iexp} = 1;
-        inputs.exps.const_ineq_tf{iexp} = char('dsviol');
+        inputs.exps.const_ineq_tf{iexp} = char('sviol');
     end
     inputs.exps.ineq_const_max_viol = 1e-6;
+
     
 
     pe_start = now;

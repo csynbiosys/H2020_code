@@ -80,6 +80,8 @@ switch inputs.ivpsol.senssolver
          if inputs.pathd.print_details
             disp('--> cvodes_sens()')
          end
+         
+ 
         privstruct.exp_y0=privstruct.y_0;
         [privstruct.yteor privstruct.iflag dydpt_optvar...
             privstruct.ivpsol.dxdt{iexp} privstruct.senssol.dsdt]=feval(inputs.ivpsol.sensmex,...
@@ -96,7 +98,7 @@ switch inputs.ivpsol.senssolver
             inputs.model.n_stimulus,...
             length(privstruct.t_con{iexp}),...Number of controls changes(handle discontinuities)
             privstruct.t_con{iexp},...Times of such discontinuities
-            privstruct.u{iexp},... Values of stimuli
+            privstruct.u{iexp}',... Values of stimuli
             inputs.exps.pend{iexp},... Slope of the line
             inputs.ivpsol.rtol,...reltol
             inputs.ivpsol.atol,...atol
@@ -120,7 +122,6 @@ switch inputs.ivpsol.senssolver
         % initialize with zeros
         dydpt_full = zeros(privstruct.n_s{iexp},inputs.model.n_st,n_par);
         % fill the sensitivities that were computed
-            
         dydpt_full(:,:,[index_theta]) = dydpt_optvar(:,:,1:n_est_par);
         % fill the sensitivities wrt to IC-s that were computed:
         dydpt_full(:,:,inputs.model.n_par  + [index_estic]) = dydpt_optvar(:,:,n_est_par+1 : n_est_par+n_est_ic);
@@ -233,10 +234,22 @@ switch inputs.ivpsol.senssolver
             
             % HANDLING CONTROL PARAMETERIZATION
             % n_rho: number of steps or ramps
+                     
+            if inputs.model.uns==0
             AMIGO_uinterp
+            if inputs.exps.u_delay_flag{iexp}==1    
+            AMIGO_uinterp_delay
+            end
+            else
+                   
+            % Assigns t_con
+            privstruct.t_con{iexp}=[inputs.exps.t_in{iexp} inputs.exps.t_f{iexp}];
+            privstruct.n_steps{iexp}=1;  
+            end %if inputs.model.uns==0
             
             % Initialize time
-            
+                      
+
             t_old=privstruct.t_con{iexp}(1);
             
             % Integration loop for sens_sys. Sens_sys has been selected
