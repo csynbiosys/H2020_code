@@ -56,6 +56,10 @@ isoptic = zeros(1,inputs.model.n_st);
 isoptpar(index_theta)=1;
 isoptic(index_estic)=1;
 
+if size(privstruct.par{iexp},1)>1
+      privstruct.par{iexp}=privstruct.par{iexp}';
+end
+ 
 switch inputs.ivpsol.senssolver
     
     case 'cvodes'
