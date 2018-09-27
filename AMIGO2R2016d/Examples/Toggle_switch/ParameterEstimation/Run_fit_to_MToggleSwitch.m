@@ -21,6 +21,8 @@ cd('Examples\Toggle_switch\ParameterEstimation');
 % Each vector is passed as input to the computing function
 % theta_min = [5e-6,1e-3,1,2,2,1e-5,1e-3,1e-4,2,2,10,10,0.001,0.001];
 % theta_max = [10,1000,100,4,4,30,1000,1e-2,4,4,1000,1000,0.1,0.1];
+%     theta_min = [5e-06,1e-3,1,2,2,1e-05,0.001,3.07e-4,2,2,1.32,1,0.001,0.001]; % verify Theta_T is correct 
+%     theta_max = [10,1000,100,4,4,30,1000,3.07e-2,4,4,1320,1000,0.1,0.1];
 % M_norm = lhsdesign(numExperiments,length(theta_min));
 % M = zeros(size(M_norm));
 % for c=1:size(M_norm,2)
@@ -29,9 +31,12 @@ cd('Examples\Toggle_switch\ParameterEstimation');
 %     end
 % end 
 % 
-% %check the location of the parameters that are fixed
-% ParFull = [0.1386*ones(size(M,1),1) M(:,1:2) 40*ones(size(M,1),1) M(:,3:5) 0.0165*ones(size(M,1),1) M(:,6:7) 0.0215*ones(size(M,1),1) M(:,8:end)];
-% save('MatrixParameters.mat','ParFull');
+% % %check the location of the parameters that are fixed
+% % ParFull = [0.1386*ones(size(M,1),1) M(:,1:2) 40*ones(size(M,1),1) M(:,3:5) 0.0165*ones(size(M,1),1) M(:,6:7) 0.0215*ones(size(M,1),1) M(:,8:end)];
+% % new 
+% ParFull = [0.1386*ones(size(M,1),1) M(:,1:2) 7000*ones(size(M,1),1) M(:,3:5) 0.0165*ones(size(M,1),1) M(:,6:7) 700*ones(size(M,1),1) M(:,8:end)];
+% 
+%  save('MatrixParameters.mat','ParFull');
 
 
 load('MatrixParameters.mat');

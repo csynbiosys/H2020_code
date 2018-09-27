@@ -13,7 +13,7 @@ newExps.n_exp = 1;
 newExps.n_obs{1}=2;                                  % Number of observables per experiment                         
 newExps.obs_names{1} = char('RFP','GFP');
 newExps.obs{1} = char('RFP = L_AU','GFP = T_AU');% Name of the observables 
-newExps.exp_y0{1}=[ToggleSwitch_recasted_Compute_SteadyState(params,InitialExpData,IPTGe,aTce),0];     
+newExps.exp_y0{1}=[ToggleSwitch_recasted_Compute_SteadyState(params,InitialExpData,IPTGe,aTce),0]     
 newExps.t_f{1}=duration;               % Experiment duration
     
 newExps.u_interp{1}='sustained';
