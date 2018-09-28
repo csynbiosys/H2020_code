@@ -197,9 +197,20 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     clear inputs;
     clear exps;
-    
     inputs.model = model;
     inputs.model.par = best_global_theta;
+
+    inputs.pathd.results_folder = results_folder;                        
+    inputs.pathd.short_name     = short_name;
+    inputs.pathd.runident       = 'initial_setup2';
+    
+    AMIGO_Prep(inputs);
+
+    inputs.pathd.results_folder = results_folder;                        
+    inputs.pathd.short_name     = short_name;
+    inputs.pathd.runident       = strcat('simTest-',int2str(epcc_exps));
+    
+    
     % Compute the steady state considering the initial theta guess, u_IPTG and
     % u_aTc
     Y0_test = zeros(length(exps_indexTest),model.n_st);
@@ -223,7 +234,7 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
         exps.u_interp{iexp} = 'step';
         exps.t_con{iexp} = Data.t_con{1,exp_indexData}(1,:);
         exps.n_steps{iexp} = length(exps.t_con{iexp})-1;
-        exps.u{iexp} = Data.input{1,iexp_indexData};
+        exps.u{iexp} = Data.input{1,exp_indexData};
         exps.data_type = 'real';
         exps.noise_type = 'homo';
         
