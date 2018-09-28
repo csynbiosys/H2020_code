@@ -85,8 +85,12 @@ for data_set=1:length(Data.expName)
     Data.standard_dev{1,i} = [nanstd(data(data_set).val.rfpMothers,[],2)';nanstd(data(data_set).val.gfpMothers,[],2)'];
     Data.n_samples{1,i} = [length(data(data_set).val.rfpMothers) length(data(data_set).val.gfpMothers)]';
     Data.t_samples{1,i} = [data(data_set).val.timerfp/60; data(data_set).val.timegfp/60]; % sampling time in minutes
-    Data.t_con{1,i} = [[EXP_data{1,data_set}.switchingtimes(1:end-1,1);max(Data.t_samples{1,data_set}(:,end))] [EXP_data{1,data_set}.switchingtimes(1:end-1);max(Data.t_samples{1,data_set}(:,end))]]';
-    Data.input{1,i} = [EXP_data{1,data_set}.IPTGext EXP_data{1,data_set}.aTcext]';
+    if length(EXP_data{1,data_set}.switchingtimes(find(EXP_data{1,data_set}.switchingtimes<Data.t_samples{1,i}(end))))== length(EXP_data{1,data_set}.switchingtimes)
+        Data.t_con{1,i} =[[EXP_data{1,data_set}.switchingtimes(1:end-1,1); max(Data.t_samples{1,data_set}(:,end))] [EXP_data{1,data_set}.switchingtimes(1:end-1,1); max(Data.t_samples{1,data_set}(:,end))]]';
+    else
+        Data.t_con{1,i} = [[EXP_data{1,data_set}.switchingtimes(find(EXP_data{1,data_set}.switchingtimes<Data.t_samples{1,i}(end)));Data.t_samples{1,i}(end)] [EXP_data{1,data_set}.switchingtimes(find(EXP_data{1,data_set}.switchingtimes<Data.t_samples{1,i}(end)));Data.t_samples{1,i}(end)]]'; 
+    end
+        Data.input{1,i} = [EXP_data{1,data_set}.IPTGext(1:length(Data.t_con{1,i})-1,1) EXP_data{1,data_set}.aTcext(1:length(Data.t_con{1,i})-1,1)]';
     if data_set<7
         Data.Initial_IPTG{1,i} = data(data_set).ind.inputsbefore(1,2);
         Data.Initial_aTc{1,i} = data(data_set).ind.inputsbefore(1,1);
@@ -100,6 +104,24 @@ for data_set=1:length(Data.expName)
         
 end
 
+%% Verify if inputs are extracted correctly
+for i=1:length(data_to_compare)
+    figure;
+    subplot(2,1,1)
+        plot(EXP_data{1,i}.time, EXP_data{1,i}.IPTGext); hold on; 
+        plot(data(i).ind.inputs(2,:));
+        title(strcat(data_to_compare{i},': IPTG'))
+        ylabel('IPTG')
+        xlabel('time (min)')
+        legend('us','Lugagne')
+    subplot(2,1,2)
+        plot(EXP_data{1,i}.time, EXP_data{1,i}.aTcext); hold on; 
+        plot(data(i).ind.inputs(1,:));
+        title(strcat(data_to_compare{i},': aTc'))
+        legend('us','Lugagne')
+        ylabel('aTc')
+        xlabel('time (min)')
+end
 
 %%
 save('AllDataLugagne_Final.mat','Data')            
