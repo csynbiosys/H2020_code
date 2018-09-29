@@ -76,15 +76,18 @@ for data_set=1:length(data_to_compare)
 end
 cd('/Users/lucia/Documents/Projects/H2020/H2020_code/AMIGO2R2016d/Examples/Toggle_switch/ParameterEstimation/ExtractionAllExperimentalData')
 
-%%
+%% Note; experiments 18 and 26 had negative values, probably due to a loss of focus. Decided to exclude those points in reconstruction. 
 Data.expName = data_to_compare;
 i = 0;
 for data_set=1:length(Data.expName)
     i = i+1;
-    Data.exp_data{1,i} = [nanmean(data(data_set).val.rfpMothers,2)'; nanmean(data(data_set).val.gfpMothers,2)'];
-    Data.standard_dev{1,i} = [nanstd(data(data_set).val.rfpMothers,[],2)';nanstd(data(data_set).val.gfpMothers,[],2)'];
-    Data.n_samples{1,i} = [length(data(data_set).val.rfpMothers) length(data(data_set).val.gfpMothers)]';
-    Data.t_samples{1,i} = [data(data_set).val.timerfp/60; data(data_set).val.timegfp/60]; % sampling time in minutes
+    
+    positiveSearch = nanmean(data(data_set).val.rfpMothers,2)>0;
+    Data.t_samples{1,i} = [data(data_set).val.timerfp(1,positiveSearch)/60; data(data_set).val.timegfp(1,positiveSearch)/60]; % sampling time in minutes
+    Data.n_samples{1,i} = [length(Data.t_samples{1,i}) length(Data.t_samples{1,i})]';
+    Data.exp_data{1,i} = [nanmean(data(data_set).val.rfpMothers(positiveSearch,:),2)'; nanmean(data(data_set).val.gfpMothers(positiveSearch,:),2)'];
+    Data.standard_dev{1,i} = [nanstd(data(data_set).val.rfpMothers(positiveSearch,:),[],2)';nanstd(data(data_set).val.gfpMothers(positiveSearch,:),[],2)'];
+   
     if length(EXP_data{1,data_set}.switchingtimes(find(EXP_data{1,data_set}.switchingtimes<Data.t_samples{1,i}(end))))== length(EXP_data{1,data_set}.switchingtimes)
         Data.t_con{1,i} =[[EXP_data{1,data_set}.switchingtimes(1:end-1,1); max(Data.t_samples{1,data_set}(:,end))] [EXP_data{1,data_set}.switchingtimes(1:end-1,1); max(Data.t_samples{1,data_set}(:,end))]]';
     else

@@ -28,15 +28,15 @@ T_AU = InitialStates_AU(2);
 
 %% Steady state equation
 
-L_molec = L_AU/sc_L_molec;
-T_molec = T_AU/sc_T_molec;
+L_molec1 = L_AU/sc_L_molec;
+T_molec1 = T_AU/sc_T_molec
 
 aTci = k_aTc*u_aTc/(g_p+k_aTc);
 IPTGi = k_iptg*u_IPTG/(g_p+k_iptg);
 
-L_molec = (1/(g_p*g_m))*(kL_p_m0 + (kL_p_m/(1+(T_molec/theta_T*(1/(1+(aTci/theta_aTc)^n_aTc)))^n_T)));
+L_molec = (1/(g_p*g_m))*(kL_p_m0 + (kL_p_m/(1+(T_molec1/theta_T*(1/(1+(aTci/theta_aTc)^n_aTc)))^n_T)))
 
-T_molec = (1/(g_p*g_m))*(kT_p_m0 + (kT_p_m/(1+(L_molec/theta_L*(1/(1+(IPTGi/theta_IPTG)^n_IPTG)))^n_L)));
+T_molec = (1/(g_p*g_m))*(kT_p_m0 + (kT_p_m/(1+(L_molec1/theta_L*(1/(1+(IPTGi/theta_IPTG)^n_IPTG)))^n_L)));
 
 L_AU = sc_L_molec*L_molec;
 T_AU = sc_T_molec*T_molec;
