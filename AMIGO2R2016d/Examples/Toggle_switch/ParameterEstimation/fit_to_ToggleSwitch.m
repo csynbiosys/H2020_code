@@ -48,8 +48,11 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
 %     global_theta_max = [0.1386,10,1000,40,100,4,4,0.0165,30,1000,0.0215,0.01,4,4,1000,1000,0.1,0.1];
 
     %new
-    global_theta_min = [0.1386,5e-06,1e-3,7000,1,2,2,0.0165,1e-05,0.001,700,3.07e-4,2,2,1.32,1,0.001,0.001]; % verify Theta_T is correct 
-    global_theta_max = [0.1386,10,1000,7000,100,4,4,0.0165,30,1000,700,3.07e-2,4,4,1320,1000,0.1,0.1];
+%     global_theta_min = [0.1386,5e-06,1e-3,7000,1,2,2,0.0165,1e-05,0.001,700,3.07e-4,2,2,1.32,1,0.001,0.001]; % verify Theta_T is correct 
+%     global_theta_max = [0.1386,10,1000,7000,100,4,4,0.0165,30,1000,700,3.07e-2,4,4,1320,1000,1,1];
+
+    global_theta_min = [0.1386,5e-06,1e-3,70,1,2,2,0.0165,1e-05,0.001,7,3.07e-4,2,2,1.32,1,0.001,0.001]; % increased upper bound on kdiff, Theta_TetR and Theta_LacI free
+    global_theta_max = [0.1386,10,1000,7000,100,4,4,0.0165,30,1000,700,3.07e-2,4,4,1320,1000,1,1];
     global_theta_guess = global_theta_guess';
     
     % Randomized vector of experiments
@@ -112,8 +115,8 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
 
     
     best_global_theta = global_theta_guess; 
-    % g_m, g_p, theta_T and theta_L excluded from identification
-    param_including_vector = [false,true,true,false,true,true,true,false,true,true,false,true,true,true,true,true,true,true];
+    % g_m and g_p excluded from identification  
+    param_including_vector = [false,true,true,true,true,true,true,false,true,true,true,true,true,true,true,true,true,true];
 
     % Compile the model
     clear inputs;
@@ -153,10 +156,10 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     inputs.nlpsol.nlpsolver='eSS';
     inputs.nlpsol.eSS.maxeval = 200000;
     inputs.nlpsol.eSS.maxtime = 5000;
-    inputs.nlpsol.eSS.log_var = [1 2 3 4 5 6 7 8 9 10 11 12 13 14];
-    inputs.nlpsol.eSS.local.solver = 'lsqnonlin'; 
-    inputs.nlpsol.eSS.local.finish = 'lsqnonlin'; 
-    inputs.rid.conf_ntrials=500;
+    inputs.nlpsol.eSS.log_var = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16];
+    inputs.nlpsol.eSS.local.solver ='fminsearch';
+    %inputs.nlpsol.eSS.local.finish = 'lsqnonlin'; 
+    %inputs.rid.conf_ntrials=500;
     
     % FINAL-TIME CONSTRAINTS
     for iexp=1:inputs.exps.n_exp
@@ -251,6 +254,8 @@ function [out] = fit_to_ToggleSwitch(epccOutputResultFileNameBase,epcc_exps,glob
     inputs.pathd.short_name     = short_name;
     inputs.pathd.runident       ='-sim';
     inputs.plotd.plotlevel='noplot';
+    inputs.ivpsol.rtol=1.0D-14;
+    inputs.ivpsol.atol=1.0D-14;
     
     sim_results = AMIGO_SObs(inputs);
 
